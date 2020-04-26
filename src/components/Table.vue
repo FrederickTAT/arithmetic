@@ -100,205 +100,260 @@
                 return results
             },
 
-            /*
-            generate(settings){
-                let items = []
-                for(let i = 0;i<settings.total;i++){
-                    let a = Math.ceil(50*Math.random())
-                    let b = Math.ceil(50*Math.random())+50
-                    items.push({id:i+1,quiz:b-a+'+'+a,ans:b})
-                }
-                return items
-            },
-             */
-            isprime(a)//判断是否为素数
-            {
-                var go = 1
-                if (a == 1) { return false }
-                if (a == 2) { return false }
-                if (a == 3) { return false }
-                for (let i = 2; i < Math.floor(a / 2) + 1; i++) {
-                    if (Math.floor(a / i) != a / i) {
-                        go = go * 1
-                    }
+            foursign() {//确定每个操作数的数量
+                let all = this.settings.prob.plus + this.settings.prob.minus + this.settings.prob.times + this.settings.prob.divide
+                let minusrate = this.settings.prob.plus / all
+                let timesrate = this.settings.prob.minus / all + minusrate
+                let dividerate = this.settings.prob.times / all + timesrate
+                let plusNum = Math.round(this.settings.prob.plus / all * this.settings.total)
+                let minusNum = Math.round(this.settings.prob.minus / all * this.settings.total)
+                let timesNum = Math.round(this.settings.prob.times / all * this.settings.total)
+                let divideNum = Math.round(this.settings.prob.divide / all * this.settings.total)
+                if ((plusNum + minusNum + timesNum + divideNum) < this.settings.total) {//四舍五入之后可能导致总数少一,就随便找一个符号加一下
+                    if (plusNum != 0) { plusNum++ }
                     else {
-                        go = 0
-                        break
+                        if (minusNum != 0) { minusNum++ }
+                        else {
+                            if (timesNum != 0) { timesNum++ }
+                            else { divideNum++ }
+                        }
                     }
                 }
-
-                if (go == 0) { return true }
-                if (go == 1) { return false }
+                let sign = { minusrate: minusrate, timesrate: timesrate, dividerate: dividerate, plusNum: plusNum, minusNum: minusNum, timesNum: timesNum, divideNum: divideNum }
+                if (this.settings.prob.plus ==0&& this.settings.prob.minus ==0&& this.settings.prob.times ==0&& this.settings.prob.divide == 0) {
+                    sign = { minusrate: 0.25, timesrate: 0.5, dividerate: 0.75, plusNum: this.settings.total / 4, minusNum: this.settings.total / 4, timesNum: this.settings.total / 4, divideNum: this.settings.total / 4 }
+                }
+                return sign
             },
-
-
-            findfactor(a)//找到因子
-            {
+            isprime(a){
+                if (a == 4) { return true }
+                for (let i = 2; i < Math.ceil(a / 2); i++) {
+                    if (Math.floor(a / i) == a / i) {
+                        return false
+                    }
+                }
+                return true
+            },
+            findfactor(a) {
+                if (a == 4) { return 2 }
                 let factor = []
-                for (let i = 2; i < (Math.floor(a / 2) + 1); i++) {
+                for (let i = 2; i < Math.ceil(a / 2); i++) {
                     if (Math.floor(a / i) == a / i) {
                         factor.push(i)
                     }
                 }
-                let go = Math.floor(Math.random() * (factor.length))
-                return factor[go]
+                return factor[Math.floor(Math.random() * (factor.length))]
             },
-
-
-
-            createsentence(a, ccc) {
+            exchange(item) {//打乱顺序
+                let items = []
+                for (let i = 0; i < (item.length); i++) {
+                    let ran = Math.floor(Math.random() * (item.length))
+                    let rep
+                    rep = item[i]
+                    item[i] = item[ran]
+                    item[ran] = rep
+                }
+                for (let i = 0; i < this.settings.total; i++) {
+                    let obj = { id: i + 1, quiz: item[i].quiz, ans: item[i].ans }
+                    items.push(obj)
+                }
+                return items
+            },
+            createsentence(choice) {
                 let one
                 let two
                 let symbol
-                switch (ccc) {
+                let ans
+                switch (choice) {
                     case 0://加法
-                        one = Math.floor(Math.random() * (a - 2)) + 1//随机生成一个比a小的数
-                        two = a - one
+                        ans = Math.ceil(Math.random() * 98) + 2
+                        one = Math.ceil(Math.random() * (ans - 2))//随机生成一个比a小的数
+                        two = ans - one
                         symbol = "+"
-                        this.settings.plus = this.settings.plus + 1
                         break
-
                     case 1://减法
-                        one = Math.floor(Math.random() * (100 - a)) + 1 + a //随机生成 比a大的数
-                        two = one - a
+                        ans = Math.ceil(Math.random() * 98) + 1
+                        one = Math.ceil(Math.random() * (100 - ans)) + ans //随机生成 比a大的数
+                        two = one - ans
                         symbol = "-"
-                        this.settings.minus = this.settings. minus + 1
                         break
-
                     case 2://乘法
-                        one = this.$options.methods.findfactor(a)               //选择a的一个因子
-                        two = a / one
+                        do {
+                            ans = Math.ceil(Math.random() * 97) + 3
+                        } while (this.isprime(ans))
+                        one = this.findfactor(ans)               //选择a的一个因子
+                        two = ans / one
                         symbol = "×"
-                        this.settings.times = this.settings.times + 1
                         break
-
                     case 3://除法
-                        two = Math.floor(Math.random() * Math.floor(100 / a)) + 1//随机成除数
-                        one = two * a
+                        ans = Math.ceil(Math.random() * 50)
+                        two = Math.ceil(Math.random() * Math.floor(100 / ans - 1)) + 1//随机成除数
+                        one = two * ans
                         symbol = "÷"
-                        this.settings.divide = this.settings.divide + 1
                         break
                 }
-                let u = []
-                u=[one , symbol ,two]
-                return u  //返回一个算式的三个部分 操作数 操作符 操作数
+                return [one, symbol, two, ans]  //返回一个算式的三个部分 操作数 操作符 操作数
             },
-
-
-
-            generateran(a) {
-                if (a == 1) {
-                    let go = [1, 3]
-                    return go[Math.floor(Math.random() * 2)]
+            limitedsentence(ans, choice) {
+                let one
+                let two
+                let symbol
+                switch (choice) {
+                    case 0://加法
+                        one = Math.ceil(Math.random() * (ans - 2))//随机生成一个比a小的数
+                        two = ans - one
+                        symbol = "+"
+                        break
+                    case 1://减法
+                        one = Math.ceil(Math.random() * (100 - ans)) + ans //随机生成 比a大的数
+                        two = one - ans
+                        symbol = "-"
+                        break
+                    case 2://乘法
+                        one = this.findfactor(ans)               //选择a的一个因子
+                        two = ans / one
+                        symbol = "×"
+                        break
+                    case 3://除法
+                        two = Math.ceil(Math.random() * Math.floor(100 / ans - 1)) + 1//随机成除数
+                        one = two * ans
+                        symbol = "÷"
+                        break
                 }
-                if (a == 100) {
-                    let go = [0, 2]
-                    return go[Math.floor(Math.random() * 2)]
-
+                return [one, symbol, two]  //返回一个算式的三个部分 操作数 操作符 操作数
+            },
+            makechoice() {
+                let ran = Math.random()
+                let rate = this.foursign()
+                if (ran < rate.minusrate) { return 0 }
+                if (ran >= rate.minusrate && ran < rate.timesrate) { return 1 }
+                if (ran >= rate.timesrate && ran < rate.dividerate) { return 2 }
+                if (ran >= rate.dividerate) { return 3 }
+            },
+            limitedmakechoice(ans) {
+                let choice = -1
+                while ((choice == 0 && ans == 1) || (choice == 1 && ans == 100) || (choice == 2 && this.isprime(ans)) || (choice == 3 && ans > 50) || choice == -1) {
+                    choice = this.makechoice()
                 }
-                if (a > 50) {
-                    let go = [0, 1]
-                    return go[Math.floor(Math.random() * 2)]
+                return choice
+            },
+            operatorone() {      //一个操作数的函数
+                let all = this.foursign()
+                let item = []
+                let obj
+                let sentence
+                for (let i = 0; i < all.plusNum; i++) {
+                    sentence = this.createsentence(0)
+                    obj = { quiz: sentence[0] + sentence[1] + sentence[2], ans: sentence[3] }
+                    item.push(obj)
                 }
-                if (!this.isprime(a)) {
-                    let go = [0, 3, 1]
-                    return go[Math.floor(Math.random() * 3)]
+                for (let i = 0; i < all.minusNum; i++) {
+                    sentence = this.createsentence(1)
+                    obj = { quiz: sentence[0] + sentence[1] + sentence[2], ans: sentence[3] }
+                    item.push(obj)
                 }
-
-                return Math.floor(Math.random() * 4)
+                for (let i = 0; i < all.timesNum; i++) {
+                    sentence = this.createsentence(2)
+                    obj = { quiz: sentence[0] + sentence[1] + sentence[2], ans: sentence[3] }
+                    item.push(obj)
+                }
+                for (let i = 0; i < all.divideNum; i++) {
+                    sentence = this.createsentence(3)
+                    obj = { quiz: sentence[0] + sentence[1] + sentence[2], ans: sentence[3] }
+                    item.push(obj)
+                }
+                return this.exchange(item)
+            },
+            nobracket() {
+                let obj
+                let items = []
+                let s1 = [",", "0", "0", "0"]
+                let s2 = ["0", "0", ","]
+                let choice1
+                let choice2
+                for (let i = 0; i < this.settings.total; i++) {
+                    choice1 = this.makechoice()
+                    choice2 = this.makechoice()
+                    if ((choice1 == 0 && choice2 == 2) || (choice1 == 2 && choice2 == 0)) {
+                        do { s1 = this.createsentence(0) } while (this.isprime(s1[0]))
+                        s2 = this.limitedsentence(s1[0], 2)
+                    }
+                    if ((choice1 == 0 && choice2 == 3) || (choice1 == 3 && choice2 == 0)) {
+                        do { s1 = this.createsentence(0) } while (s1[0] > 50)
+                        s2 = this.limitedsentence(s1[0], 3)
+                    }
+                    if ((choice1 == 1 && choice2 == 2) || (choice1 == 2 && choice2 == 1)) {
+                        do { s1 = this.createsentence(1) } while (this.isprime(s1[0]))
+                        s2 = this.limitedsentence(s1[0], 2)
+                    }
+                    if ((choice1 == 1 && choice2 == 3) || (choice1 == 3 && choice2 == 1)) {
+                        do { s1 = this.createsentence(1) } while (s1[0] > 50)
+                        s2 = this.limitedsentence(s1[0], 3)
+                    }
+                    if (choice1 == 0 && choice2 == 0) {
+                        do { s1 = this.createsentence(0) } while (s1[0] == 1)
+                        s2 = this.limitedsentence(s1[0], 0)
+                    }
+                    if ((choice1 == 0 && choice2 == 1) || (choice1 == 1 && choice1 == 0)) {
+                        do { s1 = this.createsentence(1) } while (s1[0] == 1)
+                        s2 = this.limitedsentence(s1[0], 0)
+                    }
+                    if (choice1 == 1 && choice2 == 1) {
+                        do { s1 = this.createsentence(1) } while (s1[0] == 100)
+                        s2 = this.limitedsentence(s1[0], 1)
+                    }
+                    if (choice1 == 2 && choice2 == 2) {
+                        do { s1 = this.createsentence(2) } while (this.isprime(s1[0]))
+                        s2 = this.limitedsentence(s1[0], 2)
+                    }
+                    if ((choice1 == 2 && choice2 == 3) || (choice1 == 3 && choice2 == 2)) {
+                        do { s1 = this.createsentence(3) } while (this.isprime(s1[0]))
+                        s2 = this.limitedsentence(s1[0], 2)
+                    }
+                    if (choice1 == 3 && choice2 == 3) {
+                        do { s1 = this.createsentence(3) } while (s1[0] > 50)
+                        s2 = this.limitedsentence(s1[0], 3)
+                    }
+                    obj = { id: i + 1, quiz: s2[0] + s2[1] + s2[2] + s1[1] + s1[2], ans: s1[3] }
+                    items.push(obj)
+                }
+                return this.exchange(items)
 
             },
+            hasbracket() {
+                let obj
+                let items
+                for (let i = 0; i < this.settings.total; i++) {
+                    let sentence = this.createsentence(this.makechoice())//还是随机生成结果，第一个算式
+                    let p = Math.floor(Math.random() * 2)
+                    if (p == 0) {
+                        let sentence2 = this.limitedsentence(sentence[0], this.limitedmakechoice(sentence[0]))
+                        obj = { id: i + 1, quiz: "(" + sentence2[0] + sentence2[1] + sentence2[2] + ")" + sentence[1] + sentence[2], ans: sentence[3] }    //在赋值句里加上括号
+                    }
+                    if (p == 1) {
+                        let sentence2 = this.limitedsentence(sentence[2], this.limitedmakechoice(sentence[2]))
+                        obj = { id: i + 1, quiz: sentence[0] + sentence[1] + "(" + sentence2[0] + sentence2[1] + sentence2[2] + ")", ans: sentence[3] }
+                    }
+                    items.push(obj)
+                }
+                return items
 
-
+            },
             generate(settings) {
                 this.settings = settings
-                var test = []
-
-                if (this.settings.operator == 1) {//一个操作符的情况
-                    for (let i = 0; i < this.settings.total; i++) {
-                        let go = Math.floor(Math.random() * 100) + 1//生成一个数作为结果1
-                        let v = this.createsentence(go, this.generateran(go)) //生成一个算式的三个部分
-                        /*for (let n = 0; n < test.length; n++) {//遍历数组找出相同的，分两类查找  * +一类   / - 一类
-                            if ((go == test[n].ans) && (v[1] == alert(test[n].quiz.substr(1,1)))) {
-                                if (v[1] == "*" || v[1] == "+") {
-                                    if ((v[0] == alert(test[n].quiz.substr(0, 1)) && v[2] == alert(test[n].quiz.substr(2, 1))) || (v[0] == alert(test[n].quiz.substr(2, 1))) && v[2] == alert(test[n].quiz.substr(0, 1))) {
-                                        i = i - 1
-                                        break
-                                    }
-
-                                }
-                               else {
-                                    if (v[0] == alert(test[n].quiz.substr(0, 1)) && v[2] == alert(test[n].quiz.substr(2, 1))) {
-                                        i = i - 1
-                                break
-                            }
-                                }
-
-                            }
-
-                        }*/
-                        var obj = { id: i+1, quiz: v[0] + v[1] + v[2], ans: go }//赋值
-                        test.push(obj)
+                if (settings.operator == 1) {
+                    return this.operatorone()
+                }
+                if (settings.operator == 2) {
+                    if (!this.bracket) {
+                        return this.nobracket()
+                    }
+                    if (this.bracket) {
+                        return this.hasbracket()
                     }
                 }
 
-                if (this.settings.operator == 2) {//2个操作符
-                    if (this.settings.bracket == false)//没有括号
-                    {
-                        for (let i = 0; i < this.settings.total; i++) {
-                            let go = Math.floor(Math.random() * 100) + 1
-                            var move = this.generateran(go)//随机生成第一个结果，算式
-                            while (move == 2 || move == 3) {   // 乘除不可以进行这种在分解 不包含括号的操作，只有加减可以，先排除乘除
-                                move = this.generateran(go)
-                            }
-                            let v = this.createsentence(go, move)
-                            let p = Math.floor(Math.random() * 2)
-                            let m
-                            if (v[1] == "+") {//加有两种方式，两个家数都可以迭代，随机选一个
-                                switch (p) {
-                                    case 0:
-                                        m = this.createsentence(v[0], this.generateran(v[0]))
-                                        obj = { id: i+1, quiz: m[0] + m[1] + m[2] + v[1] + v[2], ans: go }
-                                        break
-                                    case 1:
-                                        m = this.createsentence(v[2], this.generateran(v[2]))
-                                        obj = { id: i+1, quiz: v[0] + v[1] + m[0] + m[1] + m[2], ans: go }
-                                        break
-                                }
-                            }
-                            if (v[1] == "-") {//减只可以被再迭代
-                                m = this.createsentence(v[0], this.generateran(v[0]))
-                                obj = { id: i+1, quiz: m[0] + m[1] + m[2] + v[1] + v[2], ans: go }
-                            }
-                            test.push(obj)
-                        }
-                    }
-
-
-                    else {//有括号的情况，随便迭代没有限制
-                        for (let i = 0; i < this.settings.total; i++) {
-                            let go = Math.ceil(Math.random() * 100)
-                            let u = this.generateran(go)
-                            let v = this.createsentence(go, u)//还是随机生成结果，第一个算式
-                            let p = Math.floor(Math.random() * 2)
-                            let m = []
-                            switch (p) {
-                                case 0:
-                                    m = this.createsentence(v[0], this.generateran(v[0]))
-                                    obj = { id: i+1, quiz: "(" + m[0] + m[1] + m[2] + ")" + v[1] + v[2], ans: go }//在赋值句里加上括号
-                                    break
-                                case 1:
-                                    m = this.createsentence(v[2], this.generateran(v[2]))
-                                    obj = { id: i+1, quiz: v[0] + v[1] + "(" + m[0] + m[1] + m[2] + ")", ans: go }
-                                    break
-                            }
-
-                            test.push(obj)
-                        }
-                    }
-                }
-                return test
-            },
+            }
 
 
         }

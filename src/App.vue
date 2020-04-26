@@ -15,6 +15,7 @@
                 <SettingsHeader
                         v-if="activeStep==0"
                         @set-rules="setRule"
+                        @random="randomSettings"
                 ></SettingsHeader>
                 <table-header
                         v-if="activeStep==1"
@@ -95,6 +96,9 @@ export default {
       this.results={}
       this.percentage=0
       this.count = 0
+    },
+    randomSettings(){
+      this.$refs.setting.randomSettings()
     },
     setRule(){
       this.settings = this.$refs.setting.warpSettings()
