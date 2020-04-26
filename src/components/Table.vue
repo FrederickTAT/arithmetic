@@ -322,7 +322,7 @@
             },
             hasbracket() {
                 let obj
-                let items
+                let items = []
                 for (let i = 0; i < this.settings.total; i++) {
                     let sentence = this.createsentence(this.makechoice())//还是随机生成结果，第一个算式
                     let p = Math.floor(Math.random() * 2)
@@ -345,10 +345,10 @@
                     return this.operatorone()
                 }
                 if (settings.operator == 2) {
-                    if (!this.bracket) {
+                    if (!this.settings.bracket) {
                         return this.nobracket()
                     }
-                    if (this.bracket) {
+                    if (this.settings.bracket) {
                         return this.hasbracket()
                     }
                 }
